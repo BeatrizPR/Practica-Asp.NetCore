@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using OdeToFood.Models;
 using OdeToFood.Services;
 using OdeToFood.ViewModels;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace OdeToFood.Controllers
 {
+    [Authorize]
     public class HomeController : Controller
     {
         private IRestaurantData _restauranData;
@@ -20,6 +22,7 @@ namespace OdeToFood.Controllers
             _greeter = greeter;
         }
 
+        [AllowAnonymous]
         public IActionResult Index()
         {
             var model = new HomeIndexViewModel();
@@ -46,13 +49,21 @@ namespace OdeToFood.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Create(RestaurantEditModel model)
         {
-            var newRestaurant = new Restaurant();
-            newRestaurant.Name = model.Name;
-            newRestaurant.Cuisine = model.Cuisine;
-            newRestaurant = _restauranData.Add(newRestaurant);
-            return RedirectToAction(nameof(Details), new { id = newRestaurant.Id});
+            if (ModelState.IsValid)
+            {
+                var newRestaurant = new Restaurant();
+                newRestaurant.Name = model.Name;
+                newRestaurant.Cuisine = model.Cuisine;
+                newRestaurant = _restauranData.Add(newRestaurant);
+                return RedirectToAction(nameof(Details), new { id = newRestaurant.Id });
+            }
+            else
+            {
+                return View();
+            }
         }
 
     }
